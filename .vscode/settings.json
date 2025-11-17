@@ -1,0 +1,68 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/node_modules": true,
+        "**/.vscode": false,
+        "**/.vscode/*": true,
+        "!**/.vscode/settings.json": true,
+        "!**/.vscode/extensions.json": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.vite": true,
+        "**/coverage": true,
+        "**/*.log": true,
+        "**/.cache": true,
+        "**/.parcel-cache": true,
+        "**/bun.lockb": true,
+        "**/*.tmp": true,
+        "**/*.temp": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/.vite": true,
+        "**/coverage": true,
+        "**/.cache": true,
+        "**/.parcel-cache": true,
+        "**/bun.lockb": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/**": true,
+        "**/dist/**": true,
+        "**/build/**": true,
+        "**/.vite/**": true,
+        "**/coverage/**": true,
+        "**/.cache/**": true,
+        "**/.parcel-cache/**": true
+    },
+    // Biome configuration
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "quickfix.biome": "explicit",
+        "source.organizeImports.biome": "explicit",
+        "source.fixAll.biome": "explicit"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    }
+}
