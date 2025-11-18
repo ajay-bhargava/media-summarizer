@@ -1,5 +1,3 @@
-import { api } from "@socialmedia/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +6,15 @@ import type { Route } from "./+types/_index";
 
 export function meta(_args: Route.MetaArgs) {
 	return [
-		{ title: "Social Media App" },
-		{ name: "description", content: "Welcome to the Social Media App!" },
+		{ title: "PS15 Social Media System" },
+		{
+			name: "description",
+			content: "Welcome to the PS15 Social Media System!",
+		},
 	];
 }
 
 export default function Home() {
-	const _health = useQuery(api.queries.healthCheck.get);
 	const { data: session, isPending } = useSession();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");

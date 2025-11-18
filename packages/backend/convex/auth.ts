@@ -8,30 +8,37 @@ if (!process.env.BETTER_AUTH_APPLICATION_ID) {
 	throw new Error("BETTER_AUTH_APPLICATION_ID must be set");
 }
 
+if (!process.env.SITE_URL) {
+	throw new Error("SITE_URL must be set");
+}
+
 if (!process.env.CONVEX_SITE_URL) {
 	throw new Error("CONVEX_SITE_URL must be set");
 }
 
-const siteUrl = process.env.CONVEX_SITE_URL;
+const siteUrl = process.env.SITE_URL;
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
 export const createAuth = (
 	ctx: GenericCtx<DataModel>,
 	{ optionsOnly } = { optionsOnly: false },
 ) => {
-	const localOrigin = process.env.SITE_URL || "http://localhost:5173";
-
 	return betterAuth({
 		logger: {
 			disabled: optionsOnly,
 		},
-		baseURL: siteUrl,
-		trustedOrigins: [localOrigin, "http://localhost:5173"],
+		trustedOrigins: [siteUrl],
 		database: authComponent.adapter(ctx),
 		emailAndPassword: {
 			enabled: true,
 			requireEmailVerification: false,
 		},
-		plugins: [convex(), crossDomain({ siteUrl })],
+		plugins: [
+			// The cross domain plugin is required for client side frameworks
+			// It handles redirects between the local app and Convex site
+			crossDomain({ siteUrl }),
+			// The Convex plugin is required for Convex compatibility
+			convex(),
+		],
 	});
 };
