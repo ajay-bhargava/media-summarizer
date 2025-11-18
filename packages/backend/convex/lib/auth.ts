@@ -1,4 +1,5 @@
 import { api } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import type { ActionCtx, MutationCtx } from "../_generated/server";
 
 /**
@@ -63,12 +64,43 @@ export async function requireOrganizationMatch(
 }
 
 /**
+ * Return type for CheckOrganizationMembership
+ */
+export interface OrganizationMembership {
+	user: {
+		_id: Id<"userProfiles">;
+		_creationTime: number;
+		userId: string;
+		organizationId: Id<"organizations">;
+		role: string;
+		createdAt: number;
+		organization: {
+			_id: Id<"organizations">;
+			_creationTime: number;
+			name: string;
+			recipientEmail: string;
+			createdAt: number;
+		} | null;
+	};
+	organization: {
+		_id: Id<"organizations">;
+		_creationTime: number;
+		name: string;
+		recipientEmail: string;
+		createdAt: number;
+	};
+	organizationId: Id<"organizations">;
+}
+
+/**
  * Requires that the current user is authenticated and belongs to an organization.
  * Works with ActionCtx (for actions).
  * Returns the user profile with organization information.
  * Throws an error if the user is not authenticated or doesn't have a profile.
  */
-export async function CheckOrganizationMembership(ctx: ActionCtx) {
+export async function CheckOrganizationMembership(
+	ctx: ActionCtx,
+): Promise<OrganizationMembership> {
 	const identity = await ctx.auth.getUserIdentity();
 	if (!identity) {
 		throw new Error("Not authenticated");
@@ -76,8 +108,21 @@ export async function CheckOrganizationMembership(ctx: ActionCtx) {
 
 	const userId = identity.subject;
 
-	// Use runQuery to get the user profile
-	const profile = await ctx.runQuery(api.queries.userProfiles.getUserProfile, {
+	const profile: {
+		_id: Id<"userProfiles">;
+		_creationTime: number;
+		userId: string;
+		organizationId: Id<"organizations">;
+		role: string;
+		createdAt: number;
+		organization: {
+			_id: Id<"organizations">;
+			_creationTime: number;
+			name: string;
+			recipientEmail: string;
+			createdAt: number;
+		} | null;
+	} | null = await ctx.runQuery(api.queries.userProfiles.getUserProfile, {
 		userId,
 	});
 

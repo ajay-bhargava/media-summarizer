@@ -1,0 +1,5 @@
+{
+	"node": {
+		"externalPackages": ["@convex-dev/resend"]
+	}
+}

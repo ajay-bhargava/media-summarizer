@@ -5,6 +5,7 @@ import type {
 	ImageBlockParam,
 	TextBlockParam,
 } from "@anthropic-ai/sdk/resources/messages";
+import type { Id } from "../_generated/dataModel";
 import type {
 	EmailWithImages,
 	GeneratedPost,
@@ -85,7 +86,7 @@ export async function generateInstagramCaptions(
 	console.log(`[AI] Using Anthropic Model: ${process.env.CLAUDE_MODEL}`);
 	const allImages: Array<{
 		imageUrl: string;
-		emailId: string;
+		emailId: Id<"emails">;
 		subject: string;
 		sender: string;
 		textContent: string;
@@ -152,7 +153,7 @@ export async function generateInstagramCaptions(
 async function processBatch(
 	batch: Array<{
 		imageUrl: string;
-		emailId: string;
+		emailId: Id<"emails">;
 		subject: string;
 		sender: string;
 		textContent: string;

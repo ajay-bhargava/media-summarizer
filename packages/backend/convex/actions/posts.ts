@@ -1,10 +1,15 @@
 "use node";
 
 import { v } from "convex/values";
-import { action } from "../_generated/server";
-import { generateCombinedPost } from "../lib/aiGenerator";
+import { api } from "../_generated/api";
+import { action, internalAction } from "../_generated/server";
+import {
+	generateCombinedPost,
+	generateInstagramCaptions,
+} from "../lib/aiGenerator";
 import { CheckOrganizationMembership } from "../lib/auth";
-import type { GeneratedPost } from "../types";
+import type { CreatePostInput, EmailWithImages, GeneratedPost } from "../types";
+
 export const generatePost = action({
 	args: {
 		selectedImages: v.optional(
@@ -19,8 +24,8 @@ export const generatePost = action({
 			),
 		),
 	},
-	handler: async (ctx, args) => {
-		await CheckOrganizationMembership(ctx);
+	handler: async (ctx, args): Promise<GeneratedPost[]> => {
+		const { organizationId } = await CheckOrganizationMembership(ctx);
 
 		if (!args.selectedImages || args.selectedImages.length === 0) {
 			throw new Error("No selected images provided");
@@ -43,8 +48,77 @@ export const generatePost = action({
 			});
 			_posts = [{ ...post, is_user_generated: true }];
 		} else {
-			// Auto mode: generate posts from today's emails and an automatic selection
-			const _offset = Number.parseInt(process.env.TIMEZONE_OFFSET || "-5", 10);
+			const offset = Number.parseInt(process.env.TIMEZONE_OFFSET || "-5", 10);
+			const utcNow = new Date(now.getTime() + offset * 60 * 60 * 1000);
+			const start = new Date(utcNow);
+			start.setUTCHours(0, 0, 0, 0);
+			start.setTime(start.getTime() - offset * 60 * 60 * 1000);
+			const end = new Date(utcNow);
+			end.setUTCHours(23, 59, 59, 999);
+			end.setTime(end.getTime() - offset * 60 * 60 * 1000);
+
+			const _emails: EmailWithImages[] = await ctx.runQuery(
+				api.queries.emails.fetchEmailsWithImagesForDateRange,
+				{
+					startDate: start.getTime(),
+					endDate: end.getTime(),
+					organizationId,
+				},
+			);
+			if (_emails.length === 0) {
+				throw new Error("No emails found for the given date range");
+			}
+			const generatedPosts = await generateInstagramCaptions(_emails, now);
+			if (generatedPosts.length === 0) {
+				throw new Error("No posts generated");
+			}
+			_posts = generatedPosts;
 		}
+
+		const savedPosts = await ctx.runMutation(api.mutations.posts.createPosts, {
+			posts: _posts.map(
+				(post): CreatePostInput => ({
+					captionText: post.caption_text,
+					imageUrl: post.source_image_url ?? undefined,
+					imageStorageId: undefined,
+					organizationId,
+					emailId: post.email_id ?? undefined,
+					sourceImageUrl: post.source_image_url ?? undefined,
+					suggestedImage: undefined,
+					sourceImageUrls: post.source_image_urls ?? undefined,
+					isUserGenerated: post.is_user_generated ?? false,
+				}),
+			),
+		});
+
+		// Return the array of saved documents, filtering out any null values
+		return savedPosts
+			.filter((post) => post !== null)
+			.map((post) => ({
+				caption_text: post.captionText,
+				created_at: post.createdAt,
+				is_user_generated: post.isUserGenerated,
+			}));
+	},
+});
+
+export const runCronPostGeneration = internalAction({
+	handler: async (ctx) => {
+		const organizations = await ctx.runQuery(
+			api.queries.organizations.listOrganizations,
+		);
+
+		if (!organizations.length) {
+			throw new Error("[Cron]No organizations found");
+		}
+
+		const offset = Number.parseInt(process.env.TIMEZONE_OFFSET || "-5", 10);
+		const utcNow = new Date(Date.now() + offset * 60 * 60 * 1000);
+		const start = new Date(utcNow);
+		start.setUTCHours(0, 0, 0, 0);
+		start.setTime(start.getTime() - offset * 60 * 60 * 1000);
+		const end = new Date(utcNow);
+		end.setUTCHours(23, 59, 59, 999);
+		end.setTime(end.getTime() - offset * 60 * 60 * 1000);
 	},
 });
