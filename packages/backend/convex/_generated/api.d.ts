@@ -11,9 +11,13 @@
 import type * as actions_posts from "../actions/posts.js";
 import type * as actions_storage from "../actions/storage.js";
 import type * as auth from "../auth.js";
+import type * as handlers_event from "../handlers/event.js";
+import type * as http from "../http.js";
 import type * as lib_aiGenerator from "../lib/aiGenerator.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as lib_webhook from "../lib/webhook.js";
 import type * as mutations_emails from "../mutations/emails.js";
+import type * as mutations_events from "../mutations/events.js";
 import type * as mutations_organizations from "../mutations/organizations.js";
 import type * as mutations_posts from "../mutations/posts.js";
 import type * as mutations_userProfiles from "../mutations/userProfiles.js";
@@ -33,9 +37,13 @@ declare const fullApi: ApiFromModules<{
   "actions/posts": typeof actions_posts;
   "actions/storage": typeof actions_storage;
   auth: typeof auth;
+  "handlers/event": typeof handlers_event;
+  http: typeof http;
   "lib/aiGenerator": typeof lib_aiGenerator;
   "lib/auth": typeof lib_auth;
+  "lib/webhook": typeof lib_webhook;
   "mutations/emails": typeof mutations_emails;
+  "mutations/events": typeof mutations_events;
   "mutations/organizations": typeof mutations_organizations;
   "mutations/posts": typeof mutations_posts;
   "mutations/userProfiles": typeof mutations_userProfiles;
