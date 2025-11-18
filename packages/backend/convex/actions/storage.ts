@@ -3,14 +3,18 @@
 import { v } from "convex/values";
 import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { action, internalAction } from "../_generated/server";
-import { CheckOrganizationMembership } from "../lib/auth";
+import { internalAction } from "../_generated/server";
 
-export const uploadImage = action({
+/**
+ * Internal action to upload images from webhooks (no user auth required).
+ * Used when processing email attachments.
+ */
+export const uploadImageInternal = internalAction({
 	args: {
 		imageData: v.string(), // Base64 encoded image data
 		contentType: v.string(),
 		fileName: v.string(),
+		organizationId: v.id("organizations"),
 	},
 	handler: async (
 		ctx,
@@ -20,18 +24,24 @@ export const uploadImage = action({
 		url: string;
 		storageFileName: string;
 	}> => {
-		const { organizationId }: { organizationId: Id<"organizations"> } =
-			await CheckOrganizationMembership(ctx);
 		const timestamp = new Date().toISOString().split("T")[0];
 		const buffer = Buffer.from(args.imageData, "base64");
-		const extension = args.contentType.split(".").pop() || "png";
+
+		// Extract extension from contentType (e.g., "image/png" -> "png")
+		const extension = args.contentType.split("/").pop() || "png";
 		const sanitizedFileName = args.fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-		const storageId = await ctx.storage.store(new Blob([buffer]), {});
-		const _storageFileName: string = `${organizationId}/${timestamp}-${sanitizedFileName}.${extension}`;
+
+		const storageId = await ctx.storage.store(
+			new Blob([buffer], { type: args.contentType }),
+			{},
+		);
+		const _storageFileName: string = `${args.organizationId}/${timestamp}-${sanitizedFileName}.${extension}`;
+
 		const url: string | null = await ctx.storage.getUrl(storageId);
 		if (!url) {
 			throw new Error("Failed to get storage URL");
 		}
+
 		return {
 			storageId,
 			url,

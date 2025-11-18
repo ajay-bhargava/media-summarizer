@@ -92,22 +92,3 @@ export const handleEmailEvent = internalMutation({
 		}
 	},
 });
-
-/**
- * Handler for email.received events.
- * This processes incoming emails to your custom domain.
- */
-export const handleReceivedEmail = internalMutation({
-	args: {
-		payload: v.any(),
-	},
-	handler: async (_ctx, { payload }) => {
-		console.log("📧 Received email:", {
-			type: payload.type,
-			from: payload.data.from,
-			to: payload.data.to,
-			subject: payload.data.subject,
-			createdAt: payload.created_at,
-		});
-	},
-});
