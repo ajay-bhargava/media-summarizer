@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as actions_emailContent from "../actions/emailContent.js";
 import type * as actions_posts from "../actions/posts.js";
 import type * as actions_storage from "../actions/storage.js";
 import type * as auth from "../auth.js";
@@ -34,6 +35,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "actions/emailContent": typeof actions_emailContent;
   "actions/posts": typeof actions_posts;
   "actions/storage": typeof actions_storage;
   auth: typeof auth;
