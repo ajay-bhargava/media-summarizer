@@ -4,8 +4,12 @@ import { betterAuth } from "better-auth";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 
-if (!process.env.CONVEX_SITE_URL || !process.env.BETTER_AUTH_APPLICATION_ID) {
-	throw new Error("CONVEX_SITE_URL and BETTER_AUTH_APPLICATION_ID must be set");
+if (!process.env.BETTER_AUTH_APPLICATION_ID) {
+	throw new Error("BETTER_AUTH_APPLICATION_ID must be set");
+}
+
+if (!process.env.CONVEX_SITE_URL) {
+	throw new Error("CONVEX_SITE_URL must be set");
 }
 
 const siteUrl = process.env.CONVEX_SITE_URL;
@@ -15,16 +19,19 @@ export const createAuth = (
 	ctx: GenericCtx<DataModel>,
 	{ optionsOnly } = { optionsOnly: false },
 ) => {
+	const localOrigin = process.env.SITE_URL || "http://localhost:5173";
+
 	return betterAuth({
 		logger: {
 			disabled: optionsOnly,
 		},
-		trustedOrigins: [siteUrl],
+		baseURL: siteUrl,
+		trustedOrigins: [localOrigin, "http://localhost:5173"],
 		database: authComponent.adapter(ctx),
 		emailAndPassword: {
 			enabled: true,
 			requireEmailVerification: false,
 		},
-		plugins: [crossDomain({ siteUrl }), convex()],
+		plugins: [convex(), crossDomain({ siteUrl })],
 	});
 };

@@ -23,6 +23,7 @@ import type * as mutations_organizations from "../mutations/organizations.js";
 import type * as mutations_posts from "../mutations/posts.js";
 import type * as mutations_userProfiles from "../mutations/userProfiles.js";
 import type * as queries_emails from "../queries/emails.js";
+import type * as queries_healthCheck from "../queries/healthCheck.js";
 import type * as queries_organizations from "../queries/organizations.js";
 import type * as queries_posts from "../queries/posts.js";
 import type * as queries_userProfiles from "../queries/userProfiles.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   "mutations/posts": typeof mutations_posts;
   "mutations/userProfiles": typeof mutations_userProfiles;
   "queries/emails": typeof queries_emails;
+  "queries/healthCheck": typeof queries_healthCheck;
   "queries/organizations": typeof queries_organizations;
   "queries/posts": typeof queries_posts;
   "queries/userProfiles": typeof queries_userProfiles;

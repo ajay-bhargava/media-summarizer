@@ -1,10 +1,14 @@
 import { httpRouter } from "convex/server";
 import { api, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
+import { authComponent, createAuth } from "./auth";
 import { resend } from "./handlers/event";
 import { verifyResendWebhook } from "./lib/webhook";
 
 const http = httpRouter();
+
+// Register Better Auth routes (required for authentication)
+authComponent.registerRoutes(http, createAuth, { cors: true });
 
 // Handles outbound email events (sent, delivered, bounced, etc.)
 http.route({

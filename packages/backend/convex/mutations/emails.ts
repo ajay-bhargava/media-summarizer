@@ -274,3 +274,48 @@ export const updateParsedEmailContentImageUrls = mutation({
 		return await ctx.db.get(contentId);
 	},
 });
+
+export const deleteAllImagesForDateRange = mutation({
+	args: {
+		startDate: v.optional(v.number()),
+		endDate: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const { organizationId } = await requireOrganization(ctx);
+
+		// Get all emails for the organization
+		let emails = await ctx.db
+			.query("emails")
+			.withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+			.collect();
+
+		// Filter by date range if provided
+		if (args.startDate && args.endDate) {
+			emails = emails.filter(
+				(email) =>
+					email.receivedAt >= args.startDate! &&
+					email.receivedAt <= args.endDate!,
+			);
+		}
+
+		let deletedCount = 0;
+
+		// Clear imageUrls from parsedEmailContent for each email
+		for (const email of emails) {
+			const content = await ctx.db
+				.query("parsedEmailContent")
+				.withIndex("by_email", (q) => q.eq("emailId", email._id))
+				.first();
+
+			if (content && content.imageUrls && content.imageUrls.length > 0) {
+				await ctx.db.patch(content._id, { imageUrls: [] });
+				deletedCount += content.imageUrls.length;
+			}
+		}
+
+		return {
+			deletedCount,
+			message: `Successfully deleted ${deletedCount} image(s)`,
+		};
+	},
+});

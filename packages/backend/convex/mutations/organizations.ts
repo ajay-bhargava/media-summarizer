@@ -49,3 +49,60 @@ export const createOrganization = mutation({
 		return await ctx.db.get(orgId);
 	},
 });
+
+export const joinOrganization = mutation({
+	args: {
+		recipientEmail: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			throw new Error("Not authenticated");
+		}
+
+		const userId = identity.subject;
+
+		// Check if user already has an organization
+		const existingProfile = await ctx.db
+			.query("userProfiles")
+			.withIndex("by_user", (q) => q.eq("userId", userId))
+			.first();
+
+		if (existingProfile) {
+			const existingOrg = await ctx.db.get(existingProfile.organizationId);
+			throw new Error(
+				`User already belongs to organization: ${existingOrg?.name}`,
+			);
+		}
+
+		// Find organization by recipient email
+		const normalizedEmail = args.recipientEmail.toLowerCase().trim();
+		const organization = await ctx.db
+			.query("organizations")
+			.withIndex("by_recipient_email", (q) =>
+				q.eq("recipientEmail", normalizedEmail),
+			)
+			.first();
+
+		if (!organization) {
+			throw new Error(
+				`No organization found with forwarding email: ${normalizedEmail}`,
+			);
+		}
+
+		// Create user profile and join organization
+		const profileId = await ctx.db.insert("userProfiles", {
+			userId,
+			organizationId: organization._id,
+			role: "member",
+			createdAt: Date.now(),
+		});
+
+		const profile = await ctx.db.get(profileId);
+
+		return {
+			...profile,
+			organization,
+		};
+	},
+});

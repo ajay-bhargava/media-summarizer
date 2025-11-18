@@ -9,10 +9,11 @@ import {
 import type { Route } from "./+types/root";
 import "./index.css";
 
-import { ConvexProvider, ConvexReactClient } from "convex/react";
-import Header from "./components/header";
+import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
+import { ConvexReactClient } from "convex/react";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
+import { authClient } from "./lib/auth-client";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -46,24 +47,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	const convex = new ConvexReactClient(
-		import.meta.env.VITE_CONVEX_URL as string,
-	);
+	const convexUrl = import.meta.env.VITE_CONVEX_URL?.trim();
+
+	if (!convexUrl || convexUrl.length === 0) {
+		throw new Error(
+			"VITE_CONVEX_URL environment variable is not set or is empty. Add it to apps/web/.env.local and restart the dev server.",
+		);
+	}
+
+	const convex = new ConvexReactClient(convexUrl);
+
 	return (
-		<ConvexProvider client={convex}>
+		<ConvexBetterAuthProvider client={convex} authClient={authClient}>
 			<ThemeProvider
 				attribute="class"
-				defaultTheme="dark"
+				defaultTheme="system"
 				disableTransitionOnChange
 				storageKey="vite-ui-theme"
 			>
-				<div className="grid h-svh grid-rows-[auto_1fr]">
-					<Header />
-					<Outlet />
-				</div>
+				<Outlet />
 				<Toaster richColors />
 			</ThemeProvider>
-		</ConvexProvider>
+		</ConvexBetterAuthProvider>
 	);
 }
 
