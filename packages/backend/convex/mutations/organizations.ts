@@ -57,7 +57,9 @@ export const joinOrganization = mutation({
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
 		if (!identity) {
-			throw new Error("Not authenticated");
+			throw new Error(
+				"Not authenticated. Please ensure you are logged in and try again.",
+			);
 		}
 
 		const userId = identity.subject;

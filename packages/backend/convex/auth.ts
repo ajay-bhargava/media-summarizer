@@ -4,10 +4,6 @@ import { betterAuth } from "better-auth";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 
-if (!process.env.BETTER_AUTH_APPLICATION_ID) {
-	throw new Error("BETTER_AUTH_APPLICATION_ID must be set");
-}
-
 if (!process.env.SITE_URL) {
 	throw new Error("SITE_URL must be set");
 }

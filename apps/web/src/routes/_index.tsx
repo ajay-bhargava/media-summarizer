@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { signIn, signOut, signUp, useSession } from "@/lib/auth-client";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { signIn, signUp, useSession } from "@/lib/auth-client";
 import type { Route } from "./+types/_index";
 
 export function meta(_args: Route.MetaArgs) {
@@ -39,92 +45,81 @@ export default function Home() {
 		}
 	};
 
-	const handleSignOut = async () => {
-		await signOut();
-	};
-
-	return (
-		<div className="container mx-auto max-w-2xl p-8">
-			{/* Authentication Status */}
-			<Card className="mb-8">
-				<CardHeader>
-					<CardTitle>2. Authentication Status</CardTitle>
-				</CardHeader>
-				<CardContent>
-					{isPending ? (
-						<p className="text-muted-foreground">Checking authentication...</p>
-					) : session ? (
-						<div>
-							<p className="mb-2 font-medium text-green-600">✓ Authenticated</p>
-							<p className="text-muted-foreground text-sm">
-								User ID: {session.user?.id}
+	// When not authenticated, show login form
+	if (!session) {
+		return (
+			<div className="container mx-auto max-w-2xl p-8">
+				<Card className="mb-8">
+					<CardHeader>
+						<CardTitle>PS15 Social Media System</CardTitle>
+						<CardDescription>
+							Sign in to your account or create a new one
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						{isPending ? (
+							<p className="text-muted-foreground">
+								Checking authentication...
 							</p>
-							<p className="mb-4 text-muted-foreground text-sm">
-								Email: {session.user?.email}
-							</p>
-							<Button
-								type="button"
-								onClick={handleSignOut}
-								variant="default"
-								className="border-red-600 bg-red-600 text-white hover:bg-red-700"
-							>
-								Sign Out
-							</Button>
-						</div>
-					) : (
-						<div>
-							<p className="mb-4 font-medium text-orange-600">
-								✗ Not Authenticated
-							</p>
-							<form onSubmit={handleAuth} className="space-y-3">
-								{isSignUp && (
+						) : (
+							<div>
+								<form onSubmit={handleAuth} className="space-y-3">
+									{isSignUp && (
+										<input
+											type="text"
+											placeholder="Name"
+											value={name}
+											onChange={(e) => setName(e.target.value)}
+											className="w-full rounded border px-3 py-2"
+											required
+										/>
+									)}
 									<input
-										type="text"
-										placeholder="Name"
-										value={name}
-										onChange={(e) => setName(e.target.value)}
+										type="email"
+										placeholder="Email"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
 										className="w-full rounded border px-3 py-2"
 										required
 									/>
-								)}
-								<input
-									type="email"
-									placeholder="Email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									className="w-full rounded border px-3 py-2"
-									required
-								/>
-								<input
-									type="password"
-									placeholder="Password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									className="w-full rounded border px-3 py-2"
-									required
-								/>
-								<Button
-									type="submit"
-									disabled={loading}
-									className="w-full border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
-								>
-									{loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
-								</Button>
-								<Button
-									type="button"
-									onClick={() => setIsSignUp(!isSignUp)}
-									variant="neutral"
-									className="w-full border-transparent bg-transparent text-blue-600 shadow-none hover:underline"
-								>
-									{isSignUp
-										? "Already have an account? Sign In"
-										: "Need an account? Sign Up"}
-								</Button>
-							</form>
-						</div>
-					)}
-				</CardContent>
-			</Card>
+									<input
+										type="password"
+										placeholder="Password"
+										value={password}
+										onChange={(e) => setPassword(e.target.value)}
+										className="w-full rounded border px-3 py-2"
+										required
+									/>
+									<Button
+										type="submit"
+										disabled={loading}
+										className="w-full border-blue-600 bg-blue-600 text-white hover:bg-blue-700"
+									>
+										{loading ? "Loading..." : isSignUp ? "Sign Up" : "Sign In"}
+									</Button>
+									<Button
+										type="button"
+										onClick={() => setIsSignUp(!isSignUp)}
+										variant="neutral"
+										className="w-full border-transparent bg-transparent text-blue-600 shadow-none hover:underline"
+									>
+										{isSignUp
+											? "Already have an account? Sign In"
+											: "Need an account? Sign Up"}
+									</Button>
+								</form>
+							</div>
+						)}
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
+
+	// When authenticated, show dashboard (already wrapped in AuthenticatedLayout)
+	return (
+		<div className="space-y-4">
+			<div />
 		</div>
 	);
 }

@@ -11,9 +11,10 @@ import "./index.css";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
+import { AuthenticatedLayout } from "./components/authenticated-layout";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
-import { authClient } from "./lib/auth-client";
+import { authClient, useSession } from "./lib/auth-client";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -46,6 +47,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	);
 }
 
+function AppContent() {
+	const { data: session, isPending } = useSession();
+
+	if (isPending) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<p className="text-muted-foreground">Loading...</p>
+			</div>
+		);
+	}
+
+	if (session) {
+		return <AuthenticatedLayout />;
+	}
+
+	return <Outlet />;
+}
+
 export default function App() {
 	const convexUrl = import.meta.env.VITE_CONVEX_URL?.trim();
 
@@ -65,7 +84,7 @@ export default function App() {
 				disableTransitionOnChange
 				storageKey="vite-ui-theme"
 			>
-				<Outlet />
+				<AppContent />
 				<Toaster richColors />
 			</ThemeProvider>
 		</ConvexBetterAuthProvider>
