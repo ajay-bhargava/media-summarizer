@@ -11,11 +11,13 @@ import "./index.css";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
+import favicon from "./assets/favicon.ico";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
 import { authClient, useSession } from "./lib/auth-client";
 
 export const links: Route.LinksFunction = () => [
+	{ rel: "icon", href: favicon },
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
 	{
 		rel: "preconnect",

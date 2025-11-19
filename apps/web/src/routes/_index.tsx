@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Navigate } from "react-router";
+import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -50,6 +51,16 @@ export default function Home() {
 	if (!session) {
 		return (
 			<div className="container mx-auto max-w-2xl p-8">
+				<div className="mb-8 flex flex-col items-center text-center">
+					<img src={logo} alt="PS15 School Crest" className="mb-4 h-96 w-96" />
+					<h1 className="mb-2 font-bold text-3xl">PS15 Social Media System</h1>
+					<p className="max-w-xl text-muted-foreground">
+						Transform your emails into Instagram magic! 📧✨ Just send us emails
+						with photos, and watch as our AI magically turns them into
+						beautiful, caption-ready Instagram posts. Perfect for schools and
+						organizations looking to share their story effortlessly.
+					</p>
+				</div>
 				<Card className="mb-8">
 					<CardHeader>
 						<CardTitle>PS15 Social Media System</CardTitle>
