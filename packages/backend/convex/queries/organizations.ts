@@ -85,3 +85,19 @@ export const getOrganizationMemberCount = query({
 		return profiles.length;
 	},
 });
+
+export const getOrganizationCronSettings = query({
+	args: { organizationId: v.id("organizations") },
+	handler: async (ctx, args) => {
+		const organization = await ctx.db.get(args.organizationId);
+		if (!organization) {
+			return null;
+		}
+
+		return {
+			cronSchedule: organization.cronSchedule ?? null,
+			cronEnabled: organization.cronEnabled ?? false,
+			cronJobId: organization.cronJobId ?? null,
+		};
+	},
+});

@@ -17,6 +17,7 @@ import type * as http from "../http.js";
 import type * as lib_aiGenerator from "../lib/aiGenerator.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_webhook from "../lib/webhook.js";
+import type * as mutations_crons from "../mutations/crons.js";
 import type * as mutations_emails from "../mutations/emails.js";
 import type * as mutations_events from "../mutations/events.js";
 import type * as mutations_organizations from "../mutations/organizations.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   "lib/aiGenerator": typeof lib_aiGenerator;
   "lib/auth": typeof lib_auth;
   "lib/webhook": typeof lib_webhook;
+  "mutations/crons": typeof mutations_crons;
   "mutations/emails": typeof mutations_emails;
   "mutations/events": typeof mutations_events;
   "mutations/organizations": typeof mutations_organizations;

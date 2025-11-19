@@ -1,7 +1,9 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Copy, Download, Image as ImageIcon } from "lucide-react";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
 	Carousel,
@@ -11,7 +13,6 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 
 type InstagramCardProps = {
 	post: {
@@ -50,7 +51,7 @@ export function InstagramCard({ post }: InstagramCardProps) {
 		}
 	};
 
-	const downloadImage = async (imageUrl: string, index: number = 0) => {
+	const downloadImage = async (imageUrl: string, index = 0) => {
 		if (isDownloading) return;
 		setIsDownloading(true);
 
@@ -91,19 +92,23 @@ export function InstagramCard({ post }: InstagramCardProps) {
 
 			// Try to use the already-loaded image from DOM first (avoids CORS issues)
 			let img: HTMLImageElement | null = null;
-			
+
 			// Look for the image in the current card
-			const cardElement = document.querySelector(`[data-post-id="${post._id}"]`);
-			const domImg = cardElement?.querySelector("img") as HTMLImageElement | null;
-			
-			if (domImg && domImg.complete && domImg.naturalWidth > 0) {
+			const cardElement = document.querySelector(
+				`[data-post-id="${post._id}"]`,
+			);
+			const domImg = cardElement?.querySelector(
+				"img",
+			) as HTMLImageElement | null;
+
+			if (domImg?.complete && domImg.naturalWidth > 0) {
 				// Use the already-loaded image from DOM
 				img = domImg;
 			} else {
 				// Fallback: create new image element
 				img = new Image();
 				img.crossOrigin = "anonymous";
-				
+
 				// Wait for image to load
 				await new Promise<void>((resolve, reject) => {
 					img!.onload = () => resolve();
@@ -267,7 +272,7 @@ export function InstagramCard({ post }: InstagramCardProps) {
 				</div>
 
 				{/* Action Buttons Overlay */}
-				<div className="absolute bottom-2 right-2 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+				<div className="absolute right-2 bottom-2 flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
 					<Button
 						variant="noShadow"
 						size="icon"
@@ -354,7 +359,7 @@ export function InstagramCard({ post }: InstagramCardProps) {
 									>
 										<img
 											src={imageUrl}
-											alt={`Instagram post image ${index + 1}`}
+											alt={`Full resolution ${index + 1} from ${post.captionText}`}
 											className="max-h-[70vh] w-auto object-contain"
 										/>
 										<div className="flex gap-2">
@@ -393,4 +398,3 @@ export function InstagramCard({ post }: InstagramCardProps) {
 		</div>
 	);
 }
-

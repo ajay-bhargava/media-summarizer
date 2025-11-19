@@ -77,3 +77,27 @@ export const getPostsWithOrganization = query({
 		return posts;
 	},
 });
+
+export const getEmailIdsWithPosts = query({
+	args: {
+		emailIds: v.array(v.id("emails")),
+	},
+	handler: async (ctx, args) => {
+		if (args.emailIds.length === 0) {
+			return [];
+		}
+
+		// Get all posts for the given emailIds
+		const allPosts = await Promise.all(
+			args.emailIds.map((emailId) =>
+				ctx.db
+					.query("aiGeneratedPosts")
+					.withIndex("by_email", (q) => q.eq("emailId", emailId))
+					.collect(),
+			),
+		);
+
+		// Return array of emailIds that have at least one post
+		return args.emailIds.filter((_, index) => allPosts[index].length > 0);
+	},
+});

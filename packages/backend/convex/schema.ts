@@ -6,6 +6,9 @@ export default defineSchema({
 		name: v.string(),
 		recipientEmail: v.string(),
 		createdAt: v.number(),
+		cronSchedule: v.optional(v.string()),
+		cronEnabled: v.optional(v.boolean()),
+		cronJobId: v.optional(v.string()),
 	}).index("by_recipient_email", ["recipientEmail"]),
 
 	emails: defineTable({
