@@ -3,7 +3,7 @@ import { query } from "../_generated/server";
 
 export const getPosts = query({
 	args: {
-		organizationId: v.optional(v.id("organizations")),
+		organizationId: v.id("organizations"),
 		limit: v.optional(v.number()),
 		offset: v.optional(v.number()),
 	},
@@ -16,11 +16,11 @@ export const getPosts = query({
 			.withIndex("by_organization", (q) =>
 				q.eq("organizationId", args.organizationId),
 			)
-			.order("desc")
 			.collect();
 
-		// Manual pagination
-		return posts.slice(offset, offset + limit);
+		// Sort by createdAt descending, then paginate
+		const sortedPosts = posts.sort((a, b) => b.createdAt - a.createdAt);
+		return sortedPosts.slice(offset, offset + limit);
 	},
 });
 

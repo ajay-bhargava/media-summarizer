@@ -10,6 +10,7 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useEmailSelectionStore } from "@/stores/email-selection-store";
 
 type EmailCardProps = {
 	email: {
@@ -23,11 +24,11 @@ type EmailCardProps = {
 			textContent?: string;
 		} | null;
 	};
-	isSelected: boolean;
-	onSelect: (emailId: string) => void;
 };
 
-export function EmailCard({ email, isSelected, onSelect }: EmailCardProps) {
+export function EmailCard({ email }: EmailCardProps) {
+	const { selectedEmailIds, toggleEmail } = useEmailSelectionStore();
+	const isSelected = selectedEmailIds.has(email._id);
 	const imageUrls = email.parsedContent?.imageUrls || [];
 	const textContent = email.parsedContent?.textContent || email.rawText || "";
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -53,7 +54,7 @@ export function EmailCard({ email, isSelected, onSelect }: EmailCardProps) {
 					}`}
 					onClick={(e) => {
 						e.stopPropagation();
-						onSelect(email._id);
+						toggleEmail(email._id);
 					}}
 				>
 					<Check

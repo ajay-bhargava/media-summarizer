@@ -1,6 +1,5 @@
 import { api } from "@socialmedia/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { useState } from "react";
 import { EmailCard } from "@/components/email-card";
 import type { Route } from "./+types/emails";
 
@@ -63,9 +62,6 @@ function groupEmailsByDate(emails: EmailWithContent[]): GroupedEmails[] {
 
 export default function Emails() {
 	const emails = useQuery(api.queries.emails.getEmailsWithParsedContent);
-	const [selectedEmailIds, setSelectedEmailIds] = useState<Set<string>>(
-		new Set(),
-	);
 
 	if (emails === undefined) {
 		return (
@@ -93,36 +89,15 @@ export default function Emails() {
 		);
 	}
 
-	const toggleEmailSelection = (emailId: string) => {
-		setSelectedEmailIds((prev) => {
-			const next = new Set(prev);
-			if (next.has(emailId)) {
-				next.delete(emailId);
-			} else {
-				next.add(emailId);
-			}
-			return next;
-		});
-	};
-
 	return (
 		<div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden">
 			{groupedEmails.map((group) => (
 				<div key={group.label} className="flex flex-col gap-4">
 					<h2 className="font-heading text-xl">{group.label}</h2>
 					<div className="flex w-full flex-col items-center gap-4">
-						{group.emails.map((email) => {
-							const isSelected = selectedEmailIds.has(email._id);
-
-							return (
-								<EmailCard
-									key={email._id}
-									email={email}
-									isSelected={isSelected}
-									onSelect={toggleEmailSelection}
-								/>
-							);
-						})}
+						{group.emails.map((email) => (
+							<EmailCard key={email._id} email={email} />
+						))}
 					</div>
 				</div>
 			))}
