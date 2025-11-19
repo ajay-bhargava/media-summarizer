@@ -1,15 +1,7 @@
 import { api } from "@socialmedia/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-	Carousel,
-	CarouselContent,
-	CarouselItem,
-	CarouselNext,
-	CarouselPrevious,
-} from "@/components/ui/carousel";
-import { Checkbox } from "@/components/ui/checkbox";
+import { EmailCard } from "@/components/email-card";
 import type { Route } from "./+types/emails";
 
 export function meta(_args: Route.MetaArgs) {
@@ -120,75 +112,15 @@ export default function Emails() {
 					<h2 className="font-heading text-xl">{group.label}</h2>
 					<div className="flex w-full flex-col items-center gap-4">
 						{group.emails.map((email) => {
-							const imageUrls = email.parsedContent?.imageUrls || [];
-							const textContent =
-								email.parsedContent?.textContent || email.rawText || "";
 							const isSelected = selectedEmailIds.has(email._id);
 
 							return (
-								<Card
+								<EmailCard
 									key={email._id}
-									className={`relative flex aspect-[4/3] w-full max-w-3xl flex-col overflow-hidden transition-all ${
-										isSelected
-											? "ring-2 ring-black ring-offset-2"
-											: "hover:opacity-90"
-									}`}
-								>
-									{imageUrls.length > 0 && (
-										<div className="relative h-[66.666%] w-full overflow-hidden">
-											<Carousel className="h-full w-full">
-												<CarouselContent className="h-full">
-													{imageUrls.map((imageUrl, index) => (
-														<CarouselItem key={imageUrl} className="h-full">
-															<img
-																src={imageUrl}
-																alt={`${index + 1} from ${email.sender}`}
-																className="h-full w-full object-cover"
-															/>
-														</CarouselItem>
-													))}
-												</CarouselContent>
-												{imageUrls.length > 1 && (
-													<>
-														<CarouselPrevious className="left-2" />
-														<CarouselNext className="right-2" />
-													</>
-												)}
-											</Carousel>
-											<button
-												type="button"
-												className="absolute top-2 right-2 z-10"
-												onClick={(e) => {
-													e.stopPropagation();
-													toggleEmailSelection(email._id);
-												}}
-											>
-												<Checkbox checked={isSelected} />
-											</button>
-										</div>
-									)}
-									<CardContent className="flex-1 p-4">
-										<div className="space-y-2">
-											<div className="text-sm">
-												<span className="font-semibold">From:</span>{" "}
-												<span className="text-muted-foreground">
-													{email.sender}
-												</span>
-											</div>
-											<div className="text-sm">
-												<span className="font-semibold">Subject:</span>{" "}
-												<span className="text-muted-foreground">
-													{email.subject || "No subject"}
-												</span>
-											</div>
-											{textContent && (
-												<div className="line-clamp-3 font-normal text-muted-foreground text-sm">
-													{textContent}
-												</div>
-											)}
-										</div>
-									</CardContent>
-								</Card>
+									email={email}
+									isSelected={isSelected}
+									onSelect={toggleEmailSelection}
+								/>
 							);
 						})}
 					</div>
