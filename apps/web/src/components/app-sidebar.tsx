@@ -1,10 +1,18 @@
 "use client";
 
 import { api } from "@socialmedia/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { ChevronsUpDown, LogOut, Mail, Plus, SquarePen } from "lucide-react";
+import type { Id } from "@socialmedia/backend/convex/_generated/dataModel";
+import { useAction, useMutation, useQuery } from "convex/react";
+import {
+	Bot,
+	ChevronsUpDown,
+	LogOut,
+	Mail,
+	Plus,
+	SquarePen,
+} from "lucide-react";
 import * as React from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -46,15 +54,22 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
+import { useEmailSelectionStore } from "@/stores/email-selection-store";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const { isMobile } = useSidebar();
 	const { data: session } = useSession();
 	const location = useLocation();
+	const navigate = useNavigate();
 	const userProfile = useQuery(api.queries.userProfiles.getCurrentUserProfile);
+	const emails = useQuery(api.queries.emails.getEmailsWithParsedContent);
 	const joinOrganization = useMutation(
 		api.mutations.organizations.joinOrganization,
 	);
+	const generatePost = useAction(api.actions.posts.generatePost);
+	const { selectedEmailIds, getSelectedCount, clearSelection } =
+		useEmailSelectionStore();
+	const [isGenerating, setIsGenerating] = React.useState(false);
 
 	// Get current page name from pathname
 	const getPageName = (pathname: string) => {
@@ -95,6 +110,69 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
 	const handleSignOut = async () => {
 		await signOut();
+	};
+
+	const handleGeneratePost = async () => {
+		if (!emails || selectedEmailIds.size === 0) {
+			return;
+		}
+
+		setIsGenerating(true);
+		try {
+			// Get selected emails
+			const selectedEmails = emails.filter((email) =>
+				selectedEmailIds.has(email._id),
+			);
+
+			// Collect all images from selected emails
+			const allImages: Array<{
+				imageUrl: string;
+				emailId: Id<"emails">;
+				subject?: string;
+				sender: string;
+				textContent?: string;
+			}> = [];
+
+			for (const email of selectedEmails) {
+				const imageUrls = email.parsedContent?.imageUrls || [];
+				for (const imageUrl of imageUrls) {
+					allImages.push({
+						imageUrl,
+						emailId: email._id as Id<"emails">,
+						subject: email.subject,
+						sender: email.sender,
+						textContent:
+							email.parsedContent?.textContent || email.rawText || "",
+					});
+				}
+			}
+
+			if (allImages.length === 0) {
+				toast.error("No images found in selected emails");
+				return;
+			}
+
+			// Limit to 5 images
+			const imagesToUse = allImages.slice(0, 5);
+			if (allImages.length > 5) {
+				toast.warning("Maximum 5 images allowed. Using first 5 images.");
+			}
+
+			// Call generatePost action
+			await generatePost({
+				selectedImages: imagesToUse,
+			});
+
+			toast.success("Post generated successfully!");
+			clearSelection();
+			navigate("/posts");
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : "Failed to generate post";
+			toast.error(errorMessage);
+		} finally {
+			setIsGenerating(false);
+		}
 	};
 
 	const userInitials =
@@ -324,6 +402,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
+						{getSelectedCount() >= 1 && (
+							<SidebarMenuItem>
+								<SidebarMenuButton
+									tooltip="Generate Post"
+									className="border-green-600 bg-green-500 text-center text-base text-white hover:bg-green-600 [&>svg]:size-6"
+									onClick={handleGeneratePost}
+									disabled={isGenerating}
+								>
+									<Bot />
+									<span>
+										{isGenerating ? "Generating..." : "Generate Post"}
+									</span>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						)}
 					</SidebarMenu>
 				</SidebarGroup>
 			</SidebarContent>

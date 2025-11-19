@@ -76,6 +76,10 @@ export async function generateInstagramCaptions(
 	emails: EmailWithImages[],
 	_date: Date,
 ): Promise<GeneratedPost[]> {
+	if (!process.env.ANTHROPIC_API_KEY) {
+		throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+	}
+
 	const _anthropic = new Anthropic({
 		apiKey: process.env.ANTHROPIC_API_KEY,
 	});
@@ -161,13 +165,17 @@ async function processBatch(
 	date: Date,
 	batchIndex: number,
 ): Promise<GeneratedPost[]> {
-	const anthropic = new Anthropic({
-		apiKey: process.env.ANTHROPIC_API_KEY,
-	});
+	if (!process.env.ANTHROPIC_API_KEY) {
+		throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+	}
 
 	if (!process.env.CLAUDE_MODEL) {
 		throw new Error("CLAUDE_MODEL environment variable is not set");
 	}
+
+	const anthropic = new Anthropic({
+		apiKey: process.env.ANTHROPIC_API_KEY,
+	});
 
 	const contentBlocks: Array<TextBlockParam | ImageBlockParam> = [];
 
@@ -364,12 +372,17 @@ export async function generateCombinedPost({
 	images: SelectedImage[];
 	date: Date;
 }): Promise<GeneratedPost> {
-	const anthropic = new Anthropic({
-		apiKey: process.env.ANTHROPIC_API_KEY,
-	});
+	if (!process.env.ANTHROPIC_API_KEY) {
+		throw new Error("ANTHROPIC_API_KEY environment variable is not set");
+	}
+
 	if (!process.env.CLAUDE_MODEL) {
 		throw new Error("CLAUDE_MODEL environment variable is not set");
 	}
+
+	const anthropic = new Anthropic({
+		apiKey: process.env.ANTHROPIC_API_KEY,
+	});
 
 	if (!images || images.length === 0) {
 		throw new Error("No images provided");

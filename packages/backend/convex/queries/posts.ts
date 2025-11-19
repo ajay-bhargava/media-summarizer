@@ -45,3 +45,35 @@ export const getPostsOlderThan = query({
 		return posts.filter((post) => post.createdAt < args.cutoffDate);
 	},
 });
+
+export const getPostsWithOrganization = query({
+	args: {},
+	handler: async (ctx) => {
+		// Check authentication
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			return [];
+		}
+
+		// Get user's organizationId from their profile
+		const userId = identity.subject;
+		const profile = await ctx.db
+			.query("userProfiles")
+			.withIndex("by_user", (q) => q.eq("userId", userId))
+			.first();
+
+		if (!profile) {
+			return [];
+		}
+
+		const posts = await ctx.db
+			.query("aiGeneratedPosts")
+			.withIndex("by_organization", (q) =>
+				q.eq("organizationId", profile.organizationId),
+			)
+			.order("desc")
+			.collect();
+
+		return posts;
+	},
+});
