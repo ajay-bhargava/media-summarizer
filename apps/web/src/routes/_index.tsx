@@ -117,6 +117,6 @@ export default function Home() {
 		);
 	}
 
-	// When authenticated, redirect to dashboard
-	return <Navigate to="/dashboard" replace />;
+	// When authenticated, redirect to posts
+	return <Navigate to="/posts" replace />;
 }

@@ -90,14 +90,29 @@ export const getEmailsForDateRange = query({
 });
 
 export const getEmailsWithParsedContent = query({
-	args: {
-		organizationId: v.id("organizations"),
-	},
-	handler: async (ctx, args) => {
+	args: {},
+	handler: async (ctx) => {
+		// Check authentication
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) {
+			return [];
+		}
+
+		// Get user's organizationId from their profile
+		const userId = identity.subject;
+		const profile = await ctx.db
+			.query("userProfiles")
+			.withIndex("by_user", (q) => q.eq("userId", userId))
+			.first();
+
+		if (!profile) {
+			return [];
+		}
+
 		const emails = await ctx.db
 			.query("emails")
 			.withIndex("by_organization", (q) =>
-				q.eq("organizationId", args.organizationId),
+				q.eq("organizationId", profile.organizationId),
 			)
 			.collect();
 

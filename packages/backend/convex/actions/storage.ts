@@ -8,6 +8,8 @@ import { internalAction } from "../_generated/server";
 /**
  * Internal action to upload images from webhooks (no user auth required).
  * Used when processing email attachments.
+ *
+ * This is a V8 action (not Node) to support larger file sizes (16 MiB limit vs 5 MiB).
  */
 export const uploadImageInternal = internalAction({
 	args: {
@@ -25,14 +27,22 @@ export const uploadImageInternal = internalAction({
 		storageFileName: string;
 	}> => {
 		const timestamp = new Date().toISOString().split("T")[0];
-		const buffer = Buffer.from(args.imageData, "base64");
+
+		// Decode base64 in V8 action (no Buffer available)
+		// atob() decodes base64 to binary string
+		const binaryString = atob(args.imageData);
+		// Convert binary string to Uint8Array
+		const bytes = new Uint8Array(binaryString.length);
+		for (let i = 0; i < binaryString.length; i++) {
+			bytes[i] = binaryString.charCodeAt(i);
+		}
 
 		// Extract extension from contentType (e.g., "image/png" -> "png")
 		const extension = args.contentType.split("/").pop() || "png";
 		const sanitizedFileName = args.fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
 
 		const storageId = await ctx.storage.store(
-			new Blob([buffer], { type: args.contentType }),
+			new Blob([bytes], { type: args.contentType }),
 			{},
 		);
 		const _storageFileName: string = `${args.organizationId}/${timestamp}-${sanitizedFileName}.${extension}`;

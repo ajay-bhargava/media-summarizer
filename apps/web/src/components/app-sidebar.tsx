@@ -2,14 +2,7 @@
 
 import { api } from "@socialmedia/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-	ChevronsUpDown,
-	Home,
-	LogOut,
-	Mail,
-	Plus,
-	SquarePen,
-} from "lucide-react";
+import { ChevronsUpDown, LogOut, Mail, Plus, SquarePen } from "lucide-react";
 import * as React from "react";
 import { Link, useLocation } from "react-router";
 import { toast } from "sonner";
@@ -17,10 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
-	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbPage,
-	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,7 +138,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 									</SidebarMenuButton>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
-									className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-base"
+									className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-base border-2 border-border bg-background"
 									align="start"
 									side={isMobile ? "bottom" : "right"}
 									sideOffset={4}
@@ -182,7 +173,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 												<div className="font-base">Join Organization</div>
 											</DropdownMenuItem>
 										</DialogTrigger>
-										<DialogContent>
+										<DialogContent
+											className="bg-background"
+											style={{ backgroundColor: "var(--background)" }}
+										>
 											<DialogHeader>
 												<DialogTitle>Join Organization</DialogTitle>
 												<DialogDescription>
@@ -245,7 +239,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 										</div>
 									</SidebarMenuButton>
 								</DialogTrigger>
-								<DialogContent>
+								<DialogContent
+									className="bg-background"
+									style={{ backgroundColor: "var(--background)" }}
+								>
 									<DialogHeader>
 										<DialogTitle>Join Organization</DialogTitle>
 										<DialogDescription>
@@ -291,18 +288,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<Breadcrumb>
 							<BreadcrumbList>
 								<BreadcrumbItem>
-									<BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+									<BreadcrumbPage>
+										{getPageName(location.pathname)}
+									</BreadcrumbPage>
 								</BreadcrumbItem>
-								{location.pathname !== "/" && (
-									<>
-										<BreadcrumbSeparator />
-										<BreadcrumbItem>
-											<BreadcrumbPage>
-												{getPageName(location.pathname)}
-											</BreadcrumbPage>
-										</BreadcrumbItem>
-									</>
-								)}
 							</BreadcrumbList>
 						</Breadcrumb>
 					</div>
@@ -311,18 +300,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarContent className="flex-1">
 				<SidebarGroup>
 					<SidebarMenu>
-						<SidebarMenuItem>
-							<SidebarMenuButton
-								asChild
-								tooltip="Dashboard"
-								className="text-center text-base [&>svg]:size-6"
-							>
-								<Link to="/dashboard">
-									<Home />
-									<span>Dashboard</span>
-								</Link>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
 						<SidebarMenuItem>
 							<SidebarMenuButton
 								asChild
