@@ -30,6 +30,32 @@ export const generatePost = action({
 		if (!args.selectedImages || args.selectedImages.length === 0) {
 			throw new Error("No selected images provided");
 		}
+
+		// Verify all emailIds belong to the user's organization
+		const uniqueEmailIds = [
+			...new Set(args.selectedImages.map((img) => img.emailId)),
+		];
+		const emails = await Promise.all(
+			uniqueEmailIds.map((emailId) =>
+				ctx.runQuery(api.queries.emails.getEmailById, {
+					emailId,
+				}),
+			),
+		);
+
+		// Check that all emails exist and belong to the user's organization
+		for (let i = 0; i < emails.length; i++) {
+			const email = emails[i];
+			if (!email) {
+				throw new Error(`Email not found: ${uniqueEmailIds[i]}`);
+			}
+			if (email.organizationId !== organizationId) {
+				throw new Error(
+					`Email ${uniqueEmailIds[i]} does not belong to your organization`,
+				);
+			}
+		}
+
 		const now = new Date();
 		let _posts: GeneratedPost[] = [];
 		if (args.selectedImages && args.selectedImages.length > 0) {
