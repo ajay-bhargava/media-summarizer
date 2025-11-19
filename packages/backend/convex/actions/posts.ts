@@ -1,7 +1,7 @@
 "use node";
 
 import { v } from "convex/values";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
 import {
 	generateCombinedPost,
@@ -281,6 +281,37 @@ export const runCronPostGeneration = internalAction({
 			console.log(
 				`[Cron] Successfully generated and saved ${postsCount} posts for organization: ${organizationId}`,
 			);
+
+			// Schedule email to send 1 hour after cron completion (only if posts were generated)
+			if (postsCount > 0) {
+				try {
+					await ctx.scheduler.runAfter(
+						3600000, // 1 hour in milliseconds
+						internal.emails.sendDailyPostDigest,
+						{
+							organizationId,
+							startDate: start.getTime(),
+							endDate: end.getTime(),
+							includeUserGenerated: false, // Only cron-generated posts
+						},
+					);
+					console.log(
+						`[Cron] Scheduled daily digest email for organization ${organizationId} to send in 1 hour`,
+					);
+				} catch (error) {
+					const errorMessage =
+						error instanceof Error ? error.message : String(error);
+					console.error(
+						`[Cron] Failed to schedule email for organization ${organizationId}:`,
+						errorMessage,
+					);
+					// Don't throw - email scheduling failure shouldn't fail the cron job
+				}
+			} else {
+				console.log(
+					`[Cron] No posts generated, skipping email scheduling for organization: ${organizationId}`,
+				);
+			}
 
 			return {
 				success: true,

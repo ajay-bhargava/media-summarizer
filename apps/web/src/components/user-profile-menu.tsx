@@ -4,6 +4,8 @@ import { api } from "@socialmedia/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { ChevronsUpDown, LogOut, Settings } from "lucide-react";
 import * as React from "react";
+import { CronSettingsDialog } from "@/components/cron-settings-dialog";
+import { EmailSettingsDialog } from "@/components/email-settings-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -23,13 +25,14 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { signOut, useSession } from "@/lib/auth-client";
-import { CronSettingsDialog } from "@/components/cron-settings-dialog";
 
 export function UserProfileMenu() {
 	const { isMobile } = useSidebar();
 	const { data: session } = useSession();
 	const userProfile = useQuery(api.queries.userProfiles.getCurrentUserProfile);
 	const [settingsDialogOpen, setSettingsDialogOpen] = React.useState(false);
+	const [emailSettingsDialogOpen, setEmailSettingsDialogOpen] =
+		React.useState(false);
 
 	const handleSignOut = async () => {
 		await signOut();
@@ -100,15 +103,13 @@ export function UserProfileMenu() {
 									<Settings />
 									Settings
 								</DropdownMenuSubTrigger>
-								<DropdownMenuSubContent
-									className="rounded-base border-2 border-border bg-background"
-								>
-									<DropdownMenuItem
-										onClick={() => setSettingsDialogOpen(true)}
-									>
+								<DropdownMenuSubContent className="rounded-base border-2 border-border bg-background">
+									<DropdownMenuItem onClick={() => setSettingsDialogOpen(true)}>
 										Post Generation Settings
 									</DropdownMenuItem>
-									<DropdownMenuItem disabled>
+									<DropdownMenuItem
+										onClick={() => setEmailSettingsDialogOpen(true)}
+									>
 										Email Settings
 									</DropdownMenuItem>
 								</DropdownMenuSubContent>
@@ -122,11 +123,18 @@ export function UserProfileMenu() {
 				</DropdownMenuContent>
 			</DropdownMenu>
 			{userProfile?.organizationId && (
-				<CronSettingsDialog
-					open={settingsDialogOpen}
-					onOpenChange={setSettingsDialogOpen}
-					organizationId={userProfile.organizationId}
-				/>
+				<>
+					<CronSettingsDialog
+						open={settingsDialogOpen}
+						onOpenChange={setSettingsDialogOpen}
+						organizationId={userProfile.organizationId}
+					/>
+					<EmailSettingsDialog
+						open={emailSettingsDialogOpen}
+						onOpenChange={setEmailSettingsDialogOpen}
+						organizationId={userProfile.organizationId}
+					/>
+				</>
 			)}
 		</SidebarMenuItem>
 	);

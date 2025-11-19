@@ -12,6 +12,7 @@ import type * as actions_emailContent from "../actions/emailContent.js";
 import type * as actions_posts from "../actions/posts.js";
 import type * as actions_storage from "../actions/storage.js";
 import type * as auth from "../auth.js";
+import type * as emails from "../emails.js";
 import type * as handlers_event from "../handlers/event.js";
 import type * as http from "../http.js";
 import type * as lib_aiGenerator from "../lib/aiGenerator.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   "actions/posts": typeof actions_posts;
   "actions/storage": typeof actions_storage;
   auth: typeof auth;
+  emails: typeof emails;
   "handlers/event": typeof handlers_event;
   http: typeof http;
   "lib/aiGenerator": typeof lib_aiGenerator;

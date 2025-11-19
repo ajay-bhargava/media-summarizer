@@ -54,4 +54,10 @@ export default defineSchema({
 	})
 		.index("by_user", ["userId"])
 		.index("by_organization", ["organizationId"]),
+
+	emailRecipients: defineTable({
+		organizationId: v.id("organizations"),
+		email: v.string(),
+		createdAt: v.number(),
+	}).index("by_organization", ["organizationId"]),
 });

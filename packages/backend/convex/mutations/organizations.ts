@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireOrganization } from "../lib/auth";
+import { requireOrganization, requireOrganizationMatch } from "../lib/auth";
 
 export const createOrganization = mutation({
 	args: {
@@ -106,5 +106,76 @@ export const joinOrganization = mutation({
 			...profile,
 			organization,
 		};
+	},
+});
+
+export const addEmailRecipient = mutation({
+	args: {
+		organizationId: v.id("organizations"),
+		email: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await requireOrganizationMatch(ctx, args.organizationId);
+
+		// Normalize email
+		const normalizedEmail = args.email.toLowerCase().trim();
+
+		// Validate email format (basic check)
+		if (!normalizedEmail.includes("@") || !normalizedEmail.includes(".")) {
+			throw new Error("Invalid email format");
+		}
+
+		// Check if email already exists for this organization
+		const existing = await ctx.db
+			.query("emailRecipients")
+			.withIndex("by_organization", (q) =>
+				q.eq("organizationId", args.organizationId),
+			)
+			.collect();
+
+		const emailExists = existing.some(
+			(recipient) => recipient.email === normalizedEmail,
+		);
+		if (emailExists) {
+			throw new Error("Email address already added to recipients");
+		}
+
+		// Add email recipient
+		const recipientId = await ctx.db.insert("emailRecipients", {
+			organizationId: args.organizationId,
+			email: normalizedEmail,
+			createdAt: Date.now(),
+		});
+
+		return await ctx.db.get(recipientId);
+	},
+});
+
+export const removeEmailRecipient = mutation({
+	args: {
+		organizationId: v.id("organizations"),
+		email: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await requireOrganizationMatch(ctx, args.organizationId);
+
+		// Normalize email
+		const normalizedEmail = args.email.toLowerCase().trim();
+
+		// Find and delete the recipient
+		const recipients = await ctx.db
+			.query("emailRecipients")
+			.withIndex("by_organization", (q) =>
+				q.eq("organizationId", args.organizationId),
+			)
+			.collect();
+
+		const recipient = recipients.find((r) => r.email === normalizedEmail);
+		if (!recipient) {
+			throw new Error("Email recipient not found");
+		}
+
+		await ctx.db.delete(recipient._id);
+		return { success: true };
 	},
 });

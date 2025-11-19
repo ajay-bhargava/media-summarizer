@@ -101,3 +101,40 @@ export const getEmailIdsWithPosts = query({
 		return args.emailIds.filter((_, index) => allPosts[index].length > 0);
 	},
 });
+
+export const getPostsForDateRange = query({
+	args: {
+		organizationId: v.id("organizations"),
+		startDate: v.number(),
+		endDate: v.number(),
+		includeUserGenerated: v.optional(v.boolean()),
+	},
+	handler: async (ctx, args) => {
+		const includeUserGenerated = args.includeUserGenerated ?? false;
+
+		// Get all posts for the organization
+		const allPosts = await ctx.db
+			.query("aiGeneratedPosts")
+			.withIndex("by_organization", (q) =>
+				q.eq("organizationId", args.organizationId),
+			)
+			.collect();
+
+		// Filter by date range and optionally by isUserGenerated
+		return allPosts.filter((post) => {
+			const inDateRange =
+				post.createdAt >= args.startDate && post.createdAt <= args.endDate;
+			if (!inDateRange) {
+				return false;
+			}
+
+			// If includeUserGenerated is false, only return cron-generated posts
+			if (!includeUserGenerated) {
+				return post.isUserGenerated === false;
+			}
+
+			// If includeUserGenerated is true, return all posts
+			return true;
+		});
+	},
+});

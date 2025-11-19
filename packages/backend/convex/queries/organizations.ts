@@ -101,3 +101,15 @@ export const getOrganizationCronSettings = query({
 		};
 	},
 });
+
+export const getEmailRecipients = query({
+	args: { organizationId: v.id("organizations") },
+	handler: async (ctx, args) => {
+		return ctx.db
+			.query("emailRecipients")
+			.withIndex("by_organization", (q) =>
+				q.eq("organizationId", args.organizationId),
+			)
+			.collect();
+	},
+});
