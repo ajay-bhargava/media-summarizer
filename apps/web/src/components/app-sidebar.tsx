@@ -2,9 +2,16 @@
 
 import { api } from "@socialmedia/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronsUpDown, LogOut, Mail, Plus, SquarePen } from "lucide-react";
+import {
+	ChevronsUpDown,
+	Home,
+	LogOut,
+	Mail,
+	Plus,
+	SquarePen,
+} from "lucide-react";
 import * as React from "react";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -284,7 +291,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<Breadcrumb>
 							<BreadcrumbList>
 								<BreadcrumbItem>
-									<BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
+									<BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
 								</BreadcrumbItem>
 								{location.pathname !== "/" && (
 									<>
@@ -307,13 +314,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 						<SidebarMenuItem>
 							<SidebarMenuButton
 								asChild
+								tooltip="Dashboard"
+								className="text-center text-base [&>svg]:size-6"
+							>
+								<Link to="/dashboard">
+									<Home />
+									<span>Dashboard</span>
+								</Link>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+						<SidebarMenuItem>
+							<SidebarMenuButton
+								asChild
 								tooltip="Posts"
 								className="text-center text-base [&>svg]:size-6"
 							>
-								<a href="/posts">
+								<Link to="/posts">
 									<SquarePen />
 									<span>Posts</span>
-								</a>
+								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 						<SidebarMenuItem>
@@ -322,10 +341,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 								tooltip="Emails"
 								className="text-center text-base [&>svg]:size-6"
 							>
-								<a href="/emails">
+								<Link to="/emails">
 									<Mail />
 									<span>Emails</span>
-								</a>
+								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 					</SidebarMenu>

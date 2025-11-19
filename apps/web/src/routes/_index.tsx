@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -116,10 +117,6 @@ export default function Home() {
 		);
 	}
 
-	// When authenticated, show dashboard (already wrapped in AuthenticatedLayout)
-	return (
-		<div className="space-y-4">
-			<div />
-		</div>
-	);
+	// When authenticated, redirect to dashboard
+	return <Navigate to="/dashboard" replace />;
 }

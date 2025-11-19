@@ -11,7 +11,6 @@ import "./index.css";
 
 import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
 import { ConvexReactClient } from "convex/react";
-import { AuthenticatedLayout } from "./components/authenticated-layout";
 import { ThemeProvider } from "./components/theme-provider";
 import { Toaster } from "./components/ui/sonner";
 import { authClient, useSession } from "./lib/auth-client";
@@ -48,7 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-	const { data: session, isPending } = useSession();
+	const { isPending } = useSession();
 
 	if (isPending) {
 		return (
@@ -56,10 +55,6 @@ function AppContent() {
 				<p className="text-muted-foreground">Loading...</p>
 			</div>
 		);
-	}
-
-	if (session) {
-		return <AuthenticatedLayout />;
 	}
 
 	return <Outlet />;
