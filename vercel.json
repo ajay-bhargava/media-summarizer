@@ -3,7 +3,6 @@
 	"outputDirectory": "build/client",
 	"framework": null,
 	"installCommand": "cd ../.. && bun install",
-	"rootDirectory": "apps/web",
 	"rewrites": [
 		{
 			"source": "/(.*)",
