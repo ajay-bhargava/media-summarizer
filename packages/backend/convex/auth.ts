@@ -1,10 +1,8 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex, crossDomain } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth";
-import { createAuthMiddleware, APIError } from "better-auth/api";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { resend } from "./handlers/event";
 
 if (!process.env.SITE_URL) {
 	throw new Error("SITE_URL must be set");
@@ -41,42 +39,32 @@ export const createAuth = (
 		database: authComponent.adapter(ctx),
 		emailAndPassword: {
 			enabled: true,
-			requireEmailVerification: true,
-			sendResetPassword: async ({ user, url }) => {
-				await resend.sendEmail(ctx, {
-					from: "My App <noreply@example.com>",
-					to: user.email,
-					subject: "Reset your password",
-					html: `<a href="${url}">Reset your password</a>`,
-				});
-			},
+			requireEmailVerification: false,
 		},
-		emailVerification: {
-			sendOnSignUp: true,
-			autoSignInAfterVerification: true,
-			sendVerificationEmail: async ({ user, url }) => {
-				await resend.sendEmail(ctx, {
-					from: "My App <noreply@example.com>",
-					to: user.email,
-					subject: "Verify your email address",
-					html: `<a href="${url}">Verify your email</a>`,
-				});
-			},
-		},
-		hooks: {
-			before: createAuthMiddleware(async (ctx) => {
-				if (ctx.path === "/sign-up/email") {
-					const { email } = ctx.body;
-					if (email && !isValidEmailDomain(email)) {
-						throw new APIError("BAD_REQUEST", {
-							message: `Signups are restricted to email addresses from the following domains: ${ALLOWED_EMAIL_DOMAINS.join(
-								", ",
-							)}`,
-						});
+		middleware: [
+			async (input: {
+				path: string;
+				method: string;
+				body?: unknown;
+				[key: string]: unknown;
+			}) => {
+				// Check if this is a signup request (email and password signup)
+				// Only restrict signups, not sign-ins
+				const isSignUpPath =
+					(input.path.includes("/sign-up") || input.path.includes("/signup")) &&
+					!input.path.includes("/sign-in") &&
+					!input.path.includes("/signin");
+				if (isSignUpPath && input.method === "POST" && input.body) {
+					const body = input.body as { email?: string };
+					if (body.email && !isValidEmailDomain(body.email)) {
+						throw new Error(
+							`Signups are restricted to email addresses from the following domains: ${ALLOWED_EMAIL_DOMAINS.join(", ")}`,
+						);
 					}
 				}
-			}),
-		},
+				return input;
+			},
+		],
 		plugins: [
 			// The cross domain plugin is required for client side frameworks
 			// It handles redirects between the local app and Convex site
