@@ -1,8 +1,8 @@
 {
-	"buildCommand": "cd ../../packages/backend && npx convex deploy --cmd 'cd ../../apps/web && react-router build'",
-	"outputDirectory": "build/client",
+	"buildCommand": "cd packages/backend && npx convex deploy --cmd 'cd ../../apps/web && react-router build'",
+	"outputDirectory": "apps/web/build/client",
 	"framework": null,
-	"installCommand": "cd ../.. && bun install",
+	"installCommand": "bun install",
 	"rewrites": [
 		{
 			"source": "/(.*)",
