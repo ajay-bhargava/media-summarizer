@@ -17,6 +17,9 @@ import type {
 const _MAX_BATCH_SIZE_MB = 30;
 const _ESTIMATED_IMAGE_SIZE_KB = 500;
 
+// Anthropic's max image size is 5 MB, but we use URL-based images to bypass base64 limits
+const MAX_BASE64_IMAGE_SIZE_MB = 3.75;
+
 function normalizeMediaType(
 	contentType: string,
 ): "image/png" | "image/jpeg" | "image/gif" | "image/webp" {
@@ -55,6 +58,30 @@ export async function fetchImageAsBase64(
 		mediaType: normalizeMediaType(contentType),
 		base64Data: base64,
 	};
+}
+
+/**
+ * Get the size of an image from a URL without downloading the full content
+ */
+async function getImageSizeFromUrl(imageUrl: string): Promise<number> {
+	// Use HEAD request first to get Content-Length
+	try {
+		const headResponse = await fetch(imageUrl, { method: "HEAD" });
+		const contentLength = headResponse.headers.get("Content-Length");
+		if (contentLength) {
+			return Number.parseInt(contentLength, 10);
+		}
+	} catch {
+		// HEAD not supported, fall through to GET
+	}
+
+	// Fall back to GET request
+	const response = await fetch(imageUrl);
+	if (!response.ok) {
+		throw new Error(`Failed to fetch image: ${response.statusText}`);
+	}
+	const arrayBuffer = await response.arrayBuffer();
+	return arrayBuffer.byteLength;
 }
 
 export async function imageUrltoBase64(imageUrl: string): Promise<ImageBlock> {
@@ -205,16 +232,43 @@ Text: ${(image.textContent ?? "").slice(0, 500)}\n`,
 		});
 
 		try {
-			const { mediaType, base64Data } = await imageUrltoBase64(image.imageUrl);
-
-			const sizeInMB = (base64Data.length * 0.75) / (1024 * 1024);
+			// First check the image size
+			const imageSize = await getImageSizeFromUrl(image.imageUrl);
+			const sizeInMB = imageSize / (1024 * 1024);
 			console.log(
-				`[AI] Batch ${batchIndex + 1}, Image ${index + 1}: ${sizeInMB.toFixed(2)}MB`,
+				`[AI] Batch ${batchIndex + 1}, Image ${index + 1}: ${sizeInMB.toFixed(2)}MB (${imageSize} bytes)`,
 			);
 
-			if (sizeInMB > 5) {
+			// For small images, use base64; for larger images, use URL
+			if (sizeInMB <= MAX_BASE64_IMAGE_SIZE_MB) {
+				// Use base64 for smaller images
+				const { mediaType, base64Data } = await imageUrltoBase64(
+					image.imageUrl,
+				);
+				contentBlocks.push({
+					type: "image",
+					source: {
+						type: "base64",
+						media_type: mediaType,
+						data: base64Data,
+					},
+				});
+			} else if (sizeInMB <= 20) {
+				// Use URL-based image for larger images (up to 20 MB - Anthropic's URL limit)
+				console.log(
+					`[AI] Using URL-based image for ${index + 1} (${sizeInMB.toFixed(2)}MB)`,
+				);
+				contentBlocks.push({
+					type: "image",
+					source: {
+						type: "url",
+						url: image.imageUrl,
+					},
+				});
+			} else {
+				// Skip very large images
 				console.warn(
-					`[AI] Skipping image ${index + 1}: too large (${sizeInMB.toFixed(2)}MB)`,
+					`[AI] Skipping image ${index + 1}: too large (${sizeInMB.toFixed(2)}MB > 20MB limit)`,
 				);
 				contentBlocks.push({
 					type: "text",
@@ -222,15 +276,6 @@ Text: ${(image.textContent ?? "").slice(0, 500)}\n`,
 				});
 				continue;
 			}
-
-			contentBlocks.push({
-				type: "image",
-				source: {
-					type: "base64",
-					media_type: mediaType,
-					data: base64Data,
-				},
-			});
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
@@ -426,20 +471,43 @@ From: ${image.sender ?? "Unknown"}
 Text: ${(image.textContent ?? "").slice(0, 500)}\n`,
 		});
 
-		// Convert image URL to base64
+		// Process image - use base64 for small images, URL for larger ones
 		try {
-			const { mediaType, base64Data } = await imageUrltoBase64(image.imageUrl);
-
-			// Log image size for debugging
-			const sizeInMB = (base64Data.length * 0.75) / (1024 * 1024);
+			const imageSize = await getImageSizeFromUrl(image.imageUrl);
+			const sizeInMB = imageSize / (1024 * 1024);
 			console.log(
-				`[AI] User-selected image ${index + 1}: ${sizeInMB.toFixed(2)}MB`,
+				`[AI] User-selected image ${index + 1}: ${sizeInMB.toFixed(2)}MB (${imageSize} bytes)`,
 			);
 
-			// Skip images over 5MB
-			if (sizeInMB > 5) {
+			if (sizeInMB <= MAX_BASE64_IMAGE_SIZE_MB) {
+				// Use base64 for smaller images
+				const { mediaType, base64Data } = await imageUrltoBase64(
+					image.imageUrl,
+				);
+				contentBlocks.push({
+					type: "image",
+					source: {
+						type: "base64",
+						media_type: mediaType,
+						data: base64Data,
+					},
+				});
+			} else if (sizeInMB <= 20) {
+				// Use URL-based image for larger images
+				console.log(
+					`[AI] Using URL-based image for ${index + 1} (${sizeInMB.toFixed(2)}MB)`,
+				);
+				contentBlocks.push({
+					type: "image",
+					source: {
+						type: "url",
+						url: image.imageUrl,
+					},
+				});
+			} else {
+				// Skip very large images
 				console.warn(
-					`[AI] Skipping image ${index + 1}: too large (${sizeInMB.toFixed(2)}MB)`,
+					`[AI] Skipping image ${index + 1}: too large (${sizeInMB.toFixed(2)}MB > 20MB limit)`,
 				);
 				contentBlocks.push({
 					type: "text",
@@ -447,15 +515,6 @@ Text: ${(image.textContent ?? "").slice(0, 500)}\n`,
 				});
 				continue;
 			}
-
-			contentBlocks.push({
-				type: "image",
-				source: {
-					type: "base64",
-					media_type: mediaType,
-					data: base64Data,
-				},
-			});
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);

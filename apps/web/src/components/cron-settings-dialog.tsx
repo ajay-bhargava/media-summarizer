@@ -1,6 +1,7 @@
 "use client";
 
 import { api } from "@socialmedia/backend/convex/_generated/api";
+import type { Id } from "@socialmedia/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import * as React from "react";
 import { toast } from "sonner";
@@ -23,31 +24,58 @@ interface CronSettingsDialogProps {
 	organizationId: string;
 }
 
+// EST is UTC-5 (Eastern Standard Time)
+const EST_OFFSET = -5;
+
 /**
- * Parse cron spec to extract hour (e.g., "0 6 * * *" → "06:00")
+ * Convert UTC hour to EST hour
+ */
+function utcToEst(hour: number): number {
+	let estHour = hour + EST_OFFSET;
+	if (estHour < 0) {
+		estHour += 24;
+	}
+	return estHour;
+}
+
+/**
+ * Convert EST hour to UTC hour
+ */
+function estToUtc(hour: number): number {
+	let utcHour = hour - EST_OFFSET;
+	if (utcHour >= 24) {
+		utcHour -= 24;
+	}
+	return utcHour;
+}
+
+/**
+ * Parse cron spec (stored in UTC) to extract time in EST (e.g., "0 11 * * *" → "06:00" EST)
  */
 function parseCronToTime(cronSpec: string | null | undefined): string {
 	if (!cronSpec) {
-		return "06:00"; // Default to 6 AM
+		return "06:00"; // Default to 6 AM EST
 	}
 
 	// Cron format: "minute hour day month dayOfWeek"
 	// or "second minute hour day month dayOfWeek"
 	const parts = cronSpec.trim().split(/\s+/);
-	
+
 	if (parts.length === 5) {
 		// Standard cron: minute hour day month dayOfWeek
-		const hour = Number.parseInt(parts[1], 10);
+		const utcHour = Number.parseInt(parts[1], 10);
 		const minute = Number.parseInt(parts[0], 10);
-		if (!Number.isNaN(hour) && !Number.isNaN(minute)) {
-			return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+		if (!Number.isNaN(utcHour) && !Number.isNaN(minute)) {
+			const estHour = utcToEst(utcHour);
+			return `${estHour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
 		}
 	} else if (parts.length === 6) {
 		// With seconds: second minute hour day month dayOfWeek
-		const hour = Number.parseInt(parts[2], 10);
+		const utcHour = Number.parseInt(parts[2], 10);
 		const minute = Number.parseInt(parts[1], 10);
-		if (!Number.isNaN(hour) && !Number.isNaN(minute)) {
-			return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+		if (!Number.isNaN(utcHour) && !Number.isNaN(minute)) {
+			const estHour = utcToEst(utcHour);
+			return `${estHour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
 		}
 	}
 
@@ -55,13 +83,14 @@ function parseCronToTime(cronSpec: string | null | undefined): string {
 }
 
 /**
- * Convert time picker value to cron spec (e.g., "06:00" → "0 6 * * *")
+ * Convert time picker value (EST) to cron spec (UTC) (e.g., "06:00" EST → "0 11 * * *" UTC)
  */
 function convertTimeToCron(time: string): string {
 	const [hourStr, minuteStr] = time.split(":");
-	const hour = Number.parseInt(hourStr || "6", 10);
+	const estHour = Number.parseInt(hourStr || "6", 10);
 	const minute = Number.parseInt(minuteStr || "0", 10);
-	return `${minute} ${hour} * * *`;
+	const utcHour = estToUtc(estHour);
+	return `${minute} ${utcHour} * * *`;
 }
 
 export function CronSettingsDialog({
@@ -71,7 +100,7 @@ export function CronSettingsDialog({
 }: CronSettingsDialogProps) {
 	const cronSettings = useQuery(
 		api.queries.organizations.getOrganizationCronSettings,
-		{ organizationId: organizationId as any },
+		{ organizationId: organizationId as Id<"organizations"> },
 	);
 	const setCronSchedule = useMutation(
 		api.mutations.crons.setOrganizationCronSchedule,
@@ -101,7 +130,7 @@ export function CronSettingsDialog({
 		try {
 			const cronSpec = convertTimeToCron(time);
 			await setCronSchedule({
-				organizationId: organizationId as any,
+				organizationId: organizationId as Id<"organizations">,
 				cronSchedule: cronSpec,
 				enabled,
 			});
@@ -113,9 +142,7 @@ export function CronSettingsDialog({
 			onOpenChange(false);
 		} catch (error) {
 			toast.error(
-				error instanceof Error
-					? error.message
-					: "Failed to save cron settings",
+				error instanceof Error ? error.message : "Failed to save cron settings",
 			);
 		} finally {
 			setIsSaving(false);
@@ -140,7 +167,7 @@ export function CronSettingsDialog({
 				<form onSubmit={handleSave}>
 					<div className="space-y-4 py-4">
 						<div className="space-y-2">
-							<Label htmlFor="cron-time">Daily Run Time</Label>
+							<Label htmlFor="cron-time">Daily Run Time (EST)</Label>
 							<Input
 								id="cron-time"
 								type="time"
@@ -149,31 +176,29 @@ export function CronSettingsDialog({
 								disabled={isLoading || isSaving}
 								required
 							/>
-							<p className="text-xs text-muted-foreground">
-								Select the time of day when posts should be automatically
-								generated.
+							<p className="text-muted-foreground text-xs">
+								Select the time of day (Eastern Standard Time) when posts should
+								be automatically generated.
 							</p>
 						</div>
 						<div className="flex items-center space-x-2">
 							<Checkbox
 								id="cron-enabled"
 								checked={enabled}
-								onCheckedChange={(checked) =>
-									setEnabled(checked === true)
-								}
+								onCheckedChange={(checked) => setEnabled(checked === true)}
 								disabled={isLoading || isSaving}
 							/>
 							<Label
 								htmlFor="cron-enabled"
-								className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+								className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 							>
 								Enable automatic post generation
 							</Label>
 						</div>
 						{!enabled && (
-							<p className="text-xs text-muted-foreground">
-								When disabled, posts will not be automatically generated. You can
-								still generate posts manually.
+							<p className="text-muted-foreground text-xs">
+								When disabled, posts will not be automatically generated. You
+								can still generate posts manually.
 							</p>
 						)}
 					</div>
@@ -195,4 +220,3 @@ export function CronSettingsDialog({
 		</Dialog>
 	);
 }
-

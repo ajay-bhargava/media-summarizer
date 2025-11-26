@@ -95,12 +95,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				toast.warning("Maximum 5 images allowed. Using first 5 images.");
 			}
 
-			// Call generatePost action
-			await generatePost({
+			// Call generatePost action - generates one post per image
+			const generatedPosts = await generatePost({
 				selectedImages: imagesToUse,
 			});
 
-			toast.success("Post generated successfully!");
+			const postCount = generatedPosts?.length ?? imagesToUse.length;
+			toast.success(
+				postCount === 1
+					? "1 post generated successfully!"
+					: `${postCount} posts generated successfully!`,
+			);
 			clearSelection();
 			navigate("/posts");
 		} catch (error) {

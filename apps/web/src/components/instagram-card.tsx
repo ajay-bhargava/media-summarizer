@@ -252,6 +252,7 @@ export function InstagramCard({ post }: InstagramCardProps) {
 							<img
 								src={primaryImageUrl}
 								alt="Instagram post"
+								crossOrigin="anonymous"
 								className="h-full w-full object-cover object-center"
 							/>
 							<div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
@@ -266,6 +267,7 @@ export function InstagramCard({ post }: InstagramCardProps) {
 						<img
 							src={primaryImageUrl}
 							alt="Instagram post"
+							crossOrigin="anonymous"
 							className="h-full w-full object-cover object-center"
 						/>
 					)}
@@ -360,6 +362,7 @@ export function InstagramCard({ post }: InstagramCardProps) {
 										<img
 											src={imageUrl}
 											alt={`Full resolution ${index + 1} from ${post.captionText}`}
+											crossOrigin="anonymous"
 											className="max-h-[70vh] w-auto object-contain"
 										/>
 										<div className="flex gap-2">

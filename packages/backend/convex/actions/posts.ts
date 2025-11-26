@@ -62,17 +62,23 @@ export const generatePost = action({
 			if (args.selectedImages.length > 5) {
 				throw new Error("Maximum of 5 images allowed");
 			}
-			const post = await generateCombinedPost({
-				images: args.selectedImages.map((image) => ({
-					imageUrl: image.imageUrl,
-					emailId: image.emailId,
-					subject: image.subject ?? "",
-					sender: image.sender,
-					textContent: image.textContent ?? "",
-				})),
-				date: now,
-			});
-			_posts = [{ ...post, is_user_generated: true }];
+			// Generate one post per image in parallel
+			const postPromises = args.selectedImages.map((image) =>
+				generateCombinedPost({
+					images: [
+						{
+							imageUrl: image.imageUrl,
+							emailId: image.emailId,
+							subject: image.subject ?? "",
+							sender: image.sender,
+							textContent: image.textContent ?? "",
+						},
+					],
+					date: now,
+				}),
+			);
+			const posts = await Promise.all(postPromises);
+			_posts = posts.map((post) => ({ ...post, is_user_generated: true }));
 		} else {
 			const offset = Number.parseInt(process.env.TIMEZONE_OFFSET || "-5", 10);
 			const utcNow = new Date(now.getTime() + offset * 60 * 60 * 1000);
