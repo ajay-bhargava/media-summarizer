@@ -7,7 +7,6 @@ import {
 	type ListAttachmentsResponse,
 	Resend,
 } from "resend";
-import { internal } from "../_generated/api";
 import { action, internalAction } from "../_generated/server";
 
 export const fetchEmailContent = action({
@@ -93,7 +92,8 @@ export const fetchAndProcessEmailAttachments = internalAction({
 			console.error("Failed to fetch attachments:", attachmentsResponse.error);
 		}
 
-		// Process attachments - download images and upload to Convex Storage
+		// Process attachments - download images and upload directly to Convex Storage
+		// Using ctx.storage.store() directly avoids the 5 MiB action argument limit
 		const imageUrls: string[] = [];
 		const attachments = attachmentsResponse.data?.data || [];
 
@@ -110,24 +110,35 @@ export const fetchAndProcessEmailAttachments = internalAction({
 							continue;
 						}
 
-						// Convert to base64
+						// Get the raw bytes as ArrayBuffer, then convert to Blob
 						const arrayBuffer = await response.arrayBuffer();
-						const buffer = Buffer.from(arrayBuffer);
-						const base64Data = buffer.toString("base64");
+						const contentType = attachment.content_type || "image/png";
+						const blob = new Blob([arrayBuffer], { type: contentType });
 
-						// Upload to Convex Storage using internal action
-						const uploadResult = await ctx.runAction(
-							internal.actions.storage.uploadImageInternal,
-							{
-								imageData: base64Data,
-								contentType: attachment.content_type || "image/png",
-								fileName: attachment.filename || "attachment",
-								organizationId: args.organizationId,
-							},
-						);
+						// Check file size - log warning for very large files
+						const fileSizeMB = arrayBuffer.byteLength / (1024 * 1024);
+						if (fileSizeMB > 20) {
+							console.warn(
+								`Large attachment ${attachment.filename}: ${fileSizeMB.toFixed(2)} MB`,
+							);
+						}
 
-						// Store the permanent Convex Storage URL
-						imageUrls.push(uploadResult.url);
+						// Upload directly to Convex Storage - bypasses all argument size limits
+						// This can handle files up to 50 MiB (Convex storage limit per file)
+						const storageId = await ctx.storage.store(blob);
+
+						// Get the permanent URL for this stored file
+						const url = await ctx.storage.getUrl(storageId);
+						if (url) {
+							imageUrls.push(url);
+							console.log(
+								`Successfully uploaded ${attachment.filename} (${fileSizeMB.toFixed(2)} MB)`,
+							);
+						} else {
+							console.error(
+								`Failed to get URL for uploaded file ${attachment.filename}`,
+							);
+						}
 					} catch (error) {
 						console.error(
 							`Error processing attachment ${attachment.filename}:`,
