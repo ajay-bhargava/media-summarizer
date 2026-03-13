@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 
@@ -90,12 +91,12 @@ export const getEmailsForDateRange = query({
 });
 
 export const getEmailsWithParsedContent = query({
-	args: {},
-	handler: async (ctx) => {
+	args: { paginationOpts: paginationOptsValidator },
+	handler: async (ctx, args) => {
 		// Check authentication
 		const identity = await ctx.auth.getUserIdentity();
 		if (!identity) {
-			return [];
+			return { page: [], isDone: true, continueCursor: "" };
 		}
 
 		// Get user's organizationId from their profile
@@ -106,18 +107,19 @@ export const getEmailsWithParsedContent = query({
 			.first();
 
 		if (!profile) {
-			return [];
+			return { page: [], isDone: true, continueCursor: "" };
 		}
 
-		const emails = await ctx.db
+		const paginatedEmails = await ctx.db
 			.query("emails")
 			.withIndex("by_organization", (q) =>
 				q.eq("organizationId", profile.organizationId),
 			)
-			.collect();
+			.order("desc")
+			.paginate(args.paginationOpts);
 
-		return Promise.all(
-			emails.map(async (email) => {
+		const enrichedPage = await Promise.all(
+			paginatedEmails.page.map(async (email) => {
 				const parsedContent = await ctx.db
 					.query("parsedEmailContent")
 					.withIndex("by_email", (q) => q.eq("emailId", email._id))
@@ -125,6 +127,11 @@ export const getEmailsWithParsedContent = query({
 				return { ...email, parsedContent };
 			}),
 		);
+
+		return {
+			...paginatedEmails,
+			page: enrichedPage,
+		};
 	},
 });
 

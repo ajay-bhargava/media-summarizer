@@ -1,6 +1,7 @@
 import { api } from "@socialmedia/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
+import { usePaginatedQuery } from "convex/react";
 import { EmailCard } from "@/components/email-card";
+import { Button } from "@/components/ui/button";
 import type { Route } from "./+types/emails";
 
 export function meta(_args: Route.MetaArgs) {
@@ -61,9 +62,13 @@ function groupEmailsByDate(emails: EmailWithContent[]): GroupedEmails[] {
 }
 
 export default function Emails() {
-	const emails = useQuery(api.queries.emails.getEmailsWithParsedContent);
+	const { results, status, loadMore } = usePaginatedQuery(
+		api.queries.emails.getEmailsWithParsedContent,
+		{},
+		{ initialNumItems: 10 },
+	);
 
-	if (emails === undefined) {
+	if (status === "LoadingFirstPage") {
 		return (
 			<div className="flex flex-1 flex-col gap-4 p-4 pt-0">
 				<p className="text-muted-foreground">Loading emails...</p>
@@ -72,7 +77,7 @@ export default function Emails() {
 	}
 
 	// Filter emails to only include those with images
-	const emailsWithImages = emails.filter(
+	const emailsWithImages = results.filter(
 		(email) =>
 			email.parsedContent?.imageUrls &&
 			email.parsedContent.imageUrls.length > 0,
@@ -101,6 +106,19 @@ export default function Emails() {
 					</div>
 				</div>
 			))}
+
+			{status === "CanLoadMore" && (
+				<div className="flex justify-center py-4">
+					<Button variant="neutral" onClick={() => loadMore(10)}>
+						Load More Emails
+					</Button>
+				</div>
+			)}
+			{status === "LoadingMore" && (
+				<div className="flex justify-center py-4">
+					<p className="text-muted-foreground">Loading more emails...</p>
+				</div>
+			)}
 		</div>
 	);
 }
