@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import { query } from "../_generated/server";
 
 export const getPosts = query({
@@ -47,12 +48,12 @@ export const getPostsOlderThan = query({
 });
 
 export const getPostsWithOrganization = query({
-	args: {},
-	handler: async (ctx) => {
+	args: { paginationOpts: paginationOptsValidator },
+	handler: async (ctx, args) => {
 		// Check authentication
 		const identity = await ctx.auth.getUserIdentity();
 		if (!identity) {
-			return [];
+			return { page: [], isDone: true, continueCursor: "" };
 		}
 
 		// Get user's organizationId from their profile
@@ -63,18 +64,16 @@ export const getPostsWithOrganization = query({
 			.first();
 
 		if (!profile) {
-			return [];
+			return { page: [], isDone: true, continueCursor: "" };
 		}
 
-		const posts = await ctx.db
+		return await ctx.db
 			.query("aiGeneratedPosts")
 			.withIndex("by_organization", (q) =>
 				q.eq("organizationId", profile.organizationId),
 			)
 			.order("desc")
-			.collect();
-
-		return posts;
+			.paginate(args.paginationOpts);
 	},
 });
 

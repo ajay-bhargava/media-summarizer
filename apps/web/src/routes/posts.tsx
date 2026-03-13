@@ -1,6 +1,7 @@
 import { api } from "@socialmedia/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
+import { usePaginatedQuery } from "convex/react";
 import { InstagramCard } from "@/components/instagram-card";
+import { Button } from "@/components/ui/button";
 import type { Route } from "./+types/posts";
 
 export function meta(_args: Route.MetaArgs) {
@@ -59,9 +60,13 @@ function groupPostsByDate(posts: PostWithContent[]): GroupedPosts[] {
 }
 
 export default function Posts() {
-	const posts = useQuery(api.queries.posts.getPostsWithOrganization);
+	const { results, status, loadMore } = usePaginatedQuery(
+		api.queries.posts.getPostsWithOrganization,
+		{},
+		{ initialNumItems: 10 },
+	);
 
-	if (posts === undefined) {
+	if (status === "LoadingFirstPage") {
 		return (
 			<div className="flex flex-1 flex-col gap-4 p-4 pt-0">
 				<p className="text-muted-foreground">Loading posts...</p>
@@ -70,7 +75,7 @@ export default function Posts() {
 	}
 
 	// Group posts by date
-	const groupedPosts = groupPostsByDate(posts);
+	const groupedPosts = groupPostsByDate(results);
 
 	if (groupedPosts.length === 0) {
 		return (
@@ -92,6 +97,18 @@ export default function Posts() {
 					</div>
 				</div>
 			))}
+			{status === "CanLoadMore" && (
+				<div className="flex justify-center py-4">
+					<Button variant="neutral" onClick={() => loadMore(10)}>
+						Load More Posts
+					</Button>
+				</div>
+			)}
+			{status === "LoadingMore" && (
+				<div className="flex justify-center py-4">
+					<p className="text-muted-foreground">Loading more posts...</p>
+				</div>
+			)}
 		</div>
 	);
 }

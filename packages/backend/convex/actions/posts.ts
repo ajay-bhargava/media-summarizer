@@ -152,18 +152,21 @@ export const runCronPostGeneration = internalAction({
 			`[Cron] Starting post generation for organization: ${organizationId}`,
 		);
 
-		// Calculate today's date range
+		// Calculate date range: include yesterday and today so emails that arrived
+		// after the previous cron run are still processed
 		const offset = Number.parseInt(process.env.TIMEZONE_OFFSET || "-5", 10);
 		const now = new Date();
 		const utcNow = new Date(now.getTime() + offset * 60 * 60 * 1000);
 		const start = new Date(utcNow);
 		start.setUTCHours(0, 0, 0, 0);
-		start.setTime(start.getTime() - offset * 60 * 60 * 1000);
+		start.setTime(
+			start.getTime() - offset * 60 * 60 * 1000 - 24 * 60 * 60 * 1000,
+		);
 		const end = new Date(utcNow);
 		end.setUTCHours(23, 59, 59, 999);
 		end.setTime(end.getTime() - offset * 60 * 60 * 1000);
 
-		// Fetch emails with images for today's date range
+		// Fetch emails with images for yesterday + today
 		const emails: EmailWithImages[] = await ctx.runQuery(
 			api.queries.emails.fetchEmailsWithImagesForDateRange,
 			{
@@ -291,12 +294,18 @@ export const runCronPostGeneration = internalAction({
 			// Schedule email to send 1 hour after cron completion (only if posts were generated)
 			if (postsCount > 0) {
 				try {
+					// Email digest uses today's range only (posts just created have today's timestamp)
+					const emailDigestStart = new Date(utcNow);
+					emailDigestStart.setUTCHours(0, 0, 0, 0);
+					emailDigestStart.setTime(
+						emailDigestStart.getTime() - offset * 60 * 60 * 1000,
+					);
 					await ctx.scheduler.runAfter(
 						3600000, // 1 hour in milliseconds
 						internal.emails.sendDailyPostDigest,
 						{
 							organizationId,
-							startDate: start.getTime(),
+							startDate: emailDigestStart.getTime(),
 							endDate: end.getTime(),
 							includeUserGenerated: false, // Only cron-generated posts
 						},

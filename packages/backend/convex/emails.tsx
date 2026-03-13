@@ -10,7 +10,7 @@ import {
 	Section,
 	Text,
 } from "@react-email/components";
-import { pretty, render } from "@react-email/render";
+import { render } from "@react-email/render";
 import { v } from "convex/values";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -242,9 +242,7 @@ export const sendDailyPostDigest = internalAction({
 		const siteUrl = process.env.SITE_URL || "https://example.com";
 
 		// Render React Email template
-		const html = await pretty(
-			await render(<EmailTemplate posts={posts} siteUrl={siteUrl} />),
-		);
+		const html = await render(<EmailTemplate posts={posts} siteUrl={siteUrl} />);
 
 		// Send email to all recipients
 		const recipientEmails: string[] = recipients.map((r) => r.email);
