@@ -2,7 +2,7 @@
 
 import { api } from "@socialmedia/backend/convex/_generated/api";
 import type { Id } from "@socialmedia/backend/convex/_generated/dataModel";
-import { useAction, useQuery } from "convex/react";
+import { useAction, usePaginatedQuery } from "convex/react";
 import { Bot, Mail, SquarePen } from "lucide-react";
 import * as React from "react";
 import { Link, useLocation, useNavigate } from "react-router";
@@ -32,7 +32,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const { isMobile } = useSidebar();
 	const location = useLocation();
 	const navigate = useNavigate();
-	const emails = useQuery(api.queries.emails.getEmailsWithParsedContent);
+	const { results: emails } = usePaginatedQuery(
+		api.queries.emails.getEmailsWithParsedContent,
+		{},
+		{ initialNumItems: 50 },
+	);
 	const generatePost = useAction(api.actions.posts.generatePost);
 	const { selectedEmailIds, getSelectedCount, clearSelection } =
 		useEmailSelectionStore();
